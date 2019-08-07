@@ -165,6 +165,7 @@ def single_layer_back_prop(dA_curr, W_curr, b_curr, Z_curr, A_prev, activation='
     '''Back propogation of a single layer'''
 
     m = A_prev.shape[1]
+    # Get the number of training examples
 
     if activation is 'relu':
         backward_activation_func = relu_backwards
@@ -172,13 +173,52 @@ def single_layer_back_prop(dA_curr, W_curr, b_curr, Z_curr, A_prev, activation='
         backward_activation_func = sigmoid_backwards
     else:
         raise Exception('Non-supported activation function')
+    # determines the correct activation function to use
 
     dZ_curr = backward_activation_func(dA_curr, Z_curr)
+    # calculation of the change in the matrix of node values
     dW_curr = np.dot(dZ_curr, A_prev.T) / m
+    # calculate the chnage in the weights matrix
     db_curr = np.sum(dZ_curr, axis=1, keepdims=True) / m
+    # calculate the change in the bias vector
     dA_prev = np.dot(W_curr.T, dZ_curr)
+    # calculate the change of the activation matrix
 
     return dA_prev, dW_curr, db_curr
+    # return the change in actiavtion values, weights and bias vector
+
+def full_backward_propogation(Y_hat, Y, memory, param_values, nn_architecture):
+    '''A full backward propogation, '''
+
+    grads_values = {}
+    m = Y.shape[1]
+    Y = Y.reshape(Y_hat.shape)
+
+    dA_prev = - (np.divide(Y, Y_hat) - np.divide(1 - Y, 1 - Y_hat));
+    # initiation of gradient descent algorithm
+
+    for layer_idx_prev, layer in reversed(list(enumerate(nn_architecture))):
+        # iterate through the layers of the NN backwards
+
+        layer_idx_curr = layer_idx_prev + 1
+        activ_function_curr = layer['activation']
+        # find the layer's activations function
+
+        dA_curr = dA_prev
+
+        A_prev = memory['A' + str(layer_idx_prev)]
+        Z_curr = memory['Z' + str(layer_idx_curr)]
+        W_curr = param_values['W' + str(layer_idx_curr)]
+        b_curr = param_values['b' + str(layer_idx_curr)]
+
+        dA_prev, dW_curr, db_curr = single_layer_back_prop(
+            dA_curr, W_curr, b_curr, Z_curr, A_prev, activ_function_curr)
+
+        grads_values['dW' + str(layer_idx_curr)] = dW_curr
+        grads_values['db' + str(layer_idx_curr)] = db_curr
+
+    return grads_values
+
 
 
 main()
