@@ -219,6 +219,53 @@ def full_backward_propogation(Y_hat, Y, memory, param_values, nn_architecture):
 
     return grads_values
 
+def update(param_values, grads_values, nn_architecture, learning_rate):
+    '''This function updates the patameter values using gradient optimisation
+    The optimisation algorithm being used here is:
+    Wl = Wl - learning_rate * dWl
+    bl = bl - learning_rate * dbl'''
 
+    for layer_idx, layer in enumerate(nn_architecture, 1):
+        # iterate over the NN layers
+
+        param_values['W' + str(layer_idx)] -= learning_rate * grads_values['dW' + str(layer_idx)]
+        param_values['b' + str(layer_idx)] -= learning_rate * grads_values['db' + str(layer_idx)]
+
+    return param_values;
+
+def train(X, Y, nn_architecture, epochs, learning_rate):
+    ''''''
+
+    param_values = init_layers(nn_architecture, 2)
+    # initiate the NN parameters
+    cost_history = []
+    accuracy_history = []
+
+    for i in range(epochs):
+        # perform calcualtions for number of epochs
+
+        Y_hat, cashe = full_forward_propogation(X, param_values, nn_architecture)
+        # step forward
+
+        cost = get_cost_value(Y_hat, Y)
+        cost_history.append(cost)
+        accuracy = get_accuracy_value(Y_hat, Y)
+        accuracy_history.append(accuracy)
+        # calculate the cost and accuracy metics and save them in a list
+
+        grads_values = full_backward_propogation(Y_hat, Y, cashe, param_values, nn_architecture)
+        # step backward
+
+        param_values = update(param_values, grads_values, nn_architecture, learning_rate)
+        # update model's state
+
+        if (i % 50 == 0):
+            if(verbose):
+                print('Iteration: {:05} - cost: {:.5f} - accuracy: {:.5f}'.format(i, cost, accuracy))
+
+            if (callback is not None):
+                callback(i, param_values)
+
+    return param_values, cost_history, accuracy_history
 
 main()
