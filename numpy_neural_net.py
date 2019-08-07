@@ -135,4 +135,50 @@ def full_forward_propogation(X, param_values, nn_architecture):
 
     return A_curr, memory
 
+def get_cost_value(Y_hat, Y):
+    '''The cost function in this project is a binary crossentropy function
+    which is used to test the classification of points between two classes.'''
+
+    m = Y_hat.shape[1]
+    # Get the number of training examples
+    cost = -1 / m * (np.dot(Y, np.log(Y_hat).T) + np.dot(1 - Y, np.log(1 - Y_hat).T))
+    # calculate the binary crossentropy cost
+    return np.squeeze(cost)
+    # Removes the single dimensional entries from the shape of an array
+
+def get_accuracy_value(Y_hat, Y):
+    '''A function that determines the accuracy of a prediction vector'''
+
+    Y_hat_ = convert_prob_to_class(Y_hat)
+    return (Y_hat_ == Y).all(axis=0).mean()
+
+def convert_prob_to_class(probs):
+    '''A function that converts the probability of a prediction into a defined
+    classification of 1 or 0'''
+
+    probs_ = np.copy(probs)
+    probs_[probs_ > 0.5] = 1
+    probs_[probs_ <= 0.5] = 0
+    return probs_
+
+def single_layer_back_prop(dA_curr, W_curr, b_curr, Z_curr, A_prev, activation='relu'):
+    '''Back propogation of a single layer'''
+
+    m = A_prev.shape[1]
+
+    if activation is 'relu':
+        backward_activation_func = relu_backwards
+    elif activation is 'sigmoid':
+        backward_activation_func = sigmoid_backwards
+    else:
+        raise Exception('Non-supported activation function')
+
+    dZ_curr = backward_activation_func(dA_curr, Z_curr)
+    dW_curr = np.dot(dZ_curr, A_prev.T) / m
+    db_curr = np.sum(dZ_curr, axis=1, keepdims=True) / m
+    dA_prev = np.dot(W_curr.T, dZ_curr)
+
+    return dA_prev, dW_curr, db_curr
+
+
 main()
