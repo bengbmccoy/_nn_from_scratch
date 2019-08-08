@@ -20,6 +20,11 @@ Then a training function.
 '''
 
 import numpy as np
+from sklearn.datasets import make_moons
+from sklearn.model_selection import train_test_split
+
+N_SAMPLES = 2000
+TEST_SIZE = 0.1
 
 nn_architecture = [
 {'input_dim': 2, 'output_dim': 4, 'activation': 'relu'},
@@ -33,7 +38,17 @@ def main():
 
     param_values = init_layers(nn_architecture)
     # print(param_values)
-    print('param values initiated')
+    # print('param values initiated')
+
+    X, y = make_moons(n_samples = N_SAMPLES, noise = 0.2, random_state=100)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = TEST_SIZE, random_state=42)
+
+    param_values = train(np.transpose(X_train), np.transpose(y_train.reshape((y_train.shape[0], 1))), nn_architecture, 10000, 0.01)
+
+    Y_test_hat, _ = full_forward_propogation(np.transpose(X_test), param_values, nn_architecture)
+
+    acc_test = get_accuracy_value(Y_test_hat, np.transpose(y_test.reshape((y_test.shape[0], 1))))
+    print('Test set accuracy: {:.2f} - Ben'.format(acc_test))
 
 def init_layers(nn_architecture, seed=99):
     '''This function will take the neural netowrk archtecture and a seed
@@ -233,7 +248,7 @@ def update(param_values, grads_values, nn_architecture, learning_rate):
 
     return param_values;
 
-def train(X, Y, nn_architecture, epochs, learning_rate):
+def train(X, Y, nn_architecture, epochs, learning_rate, verbose=True, callback=None):
     ''''''
 
     param_values = init_layers(nn_architecture, 2)
@@ -259,13 +274,14 @@ def train(X, Y, nn_architecture, epochs, learning_rate):
         param_values = update(param_values, grads_values, nn_architecture, learning_rate)
         # update model's state
 
-        if (i % 50 == 0):
+        if (i % 100 == 0):
             if(verbose):
+                # print(param_values)
                 print('Iteration: {:05} - cost: {:.5f} - accuracy: {:.5f}'.format(i, cost, accuracy))
 
             if (callback is not None):
                 callback(i, param_values)
 
-    return param_values, cost_history, accuracy_history
+    return param_values
 
 main()
