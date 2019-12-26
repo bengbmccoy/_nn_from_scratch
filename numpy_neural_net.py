@@ -22,15 +22,16 @@ Then a training function.
 import numpy as np
 from sklearn.datasets import make_moons
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 
 N_SAMPLES = 2000
 TEST_SIZE = 0.1
 
 nn_architecture = [
-{'input_dim': 2, 'output_dim': 4, 'activation': 'relu'},
-{'input_dim': 4, 'output_dim': 6, 'activation': 'relu'},
-{'input_dim': 6, 'output_dim': 6, 'activation': 'relu'},
-{'input_dim': 6, 'output_dim': 4, 'activation': 'relu'},
+{'input_dim': 2, 'output_dim': 4, 'activation': 'sigmoid'},
+{'input_dim': 4, 'output_dim': 6, 'activation': 'sigmoid'},
+{'input_dim': 6, 'output_dim': 6, 'activation': 'sigmoid'},
+{'input_dim': 6, 'output_dim': 4, 'activation': 'sigmoid'},
 {'input_dim': 4, 'output_dim': 1, 'activation': 'sigmoid'},
 ]
 
@@ -43,10 +44,19 @@ def main():
     X, y = make_moons(n_samples = N_SAMPLES, noise = 0.2, random_state=100)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = TEST_SIZE, random_state=42)
 
+    # DATA CHECK
+    # for i in range(len(X_train)):
+    #     if y_train[i] == 0:
+    #         plt.scatter(X_train[i][0],X_train[i][1], color='orange')
+    #     else:
+    #         plt.scatter(X_train[i][0],X_train[i][1], color='blue')
+    # plt.show()
+
     param_values = train(np.transpose(X_train), np.transpose(y_train.reshape((y_train.shape[0], 1))), nn_architecture, 10000, 0.01)
+    # print(param_values)
+    # print('param values learned')
 
     Y_test_hat, _ = full_forward_propogation(np.transpose(X_test), param_values, nn_architecture)
-
     acc_test = get_accuracy_value(Y_test_hat, np.transpose(y_test.reshape((y_test.shape[0], 1))))
     print('Test set accuracy: {:.2f} - Ben'.format(acc_test))
 
@@ -176,7 +186,7 @@ def convert_prob_to_class(probs):
     probs_[probs_ <= 0.5] = 0
     return probs_
 
-def single_layer_back_prop(dA_curr, W_curr, b_curr, Z_curr, A_prev, activation='relu'):
+def single_layer_back_prop(dA_curr, W_curr, b_curr, Z_curr, A_prev, activation='sigmoid'):
     '''Back propogation of a single layer'''
 
     m = A_prev.shape[1]
@@ -232,6 +242,7 @@ def full_backward_propogation(Y_hat, Y, memory, param_values, nn_architecture):
         grads_values['dW' + str(layer_idx_curr)] = dW_curr
         grads_values['db' + str(layer_idx_curr)] = db_curr
 
+    # print(grads_values)
     return grads_values
 
 def update(param_values, grads_values, nn_architecture, learning_rate):
@@ -260,6 +271,7 @@ def train(X, Y, nn_architecture, epochs, learning_rate, verbose=True, callback=N
         # perform calcualtions for number of epochs
 
         Y_hat, cashe = full_forward_propogation(X, param_values, nn_architecture)
+        # print(Y_hat)
         # step forward
 
         cost = get_cost_value(Y_hat, Y)
@@ -268,19 +280,26 @@ def train(X, Y, nn_architecture, epochs, learning_rate, verbose=True, callback=N
         accuracy_history.append(accuracy)
         # calculate the cost and accuracy metics and save them in a list
 
+        # print(Y_hat)
         grads_values = full_backward_propogation(Y_hat, Y, cashe, param_values, nn_architecture)
+        # print(grads_values)
         # step backward
 
         param_values = update(param_values, grads_values, nn_architecture, learning_rate)
         # update model's state
 
-        if (i % 100 == 0):
+        if (i % 1000 == 0):
             if(verbose):
                 # print(param_values)
+                print(grads_values)
                 print('Iteration: {:05} - cost: {:.5f} - accuracy: {:.5f}'.format(i, cost, accuracy))
 
             if (callback is not None):
                 callback(i, param_values)
+
+    # plt.plot(accuracy_history)
+    # plt.plot(cost_history)
+    # plt.show()
 
     return param_values
 
